@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package cloudinary.events;
+
+message UserEvent {
+  string userId = 1;
+  string oldPhotoUrl = 2;
+  string newPhotoBase64 = 3;
+  string eventType = 4; // e.g., "USER_PHOTO_UPDATED"
+  string photoUrl = 5;
+}

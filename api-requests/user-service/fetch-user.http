@@ -1,0 +1,2 @@
+### GET request Fetch Profile
+GET http://localhost:8080/api/users/profile

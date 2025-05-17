@@ -1,0 +1,3 @@
+### POST request to validate Token
+POST http://localhost:8080/auth/logout
+Content-Type: application/json

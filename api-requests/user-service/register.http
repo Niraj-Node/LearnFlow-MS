@@ -1,0 +1,12 @@
+### GET request for health check
+GET  http://localhost:8080/api/users/health
+
+### POST request for registration
+POST  http://localhost:8080/api/users/register
+Content-Type: application/json
+
+{
+  "name": "Niraj",
+  "email": "niraj@example.com",
+  "password": "Password@123"
+}
