@@ -1,6 +1,6 @@
 package com.lms.userservice.kafka;
 
-import cloudinary.events.UserEventOuterClass.UserEvent;
+import cloudinary.events.CloudinaryEvent.UserPhotoUploadCompleted;
 import com.lms.userservice.exception.ResourceNotFoundException;
 import com.lms.userservice.model.User;
 import com.lms.userservice.repository.UserRepository;
@@ -20,25 +20,22 @@ public class KafkaConsumer {
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
     private final UserRepository userRepository;
 
-    @KafkaListener(topics = "user", groupId = "user-service")
-    public void consumeUserPhotoUploadedEvent(ConsumerRecord<String, byte[]> record) {
+    @KafkaListener(topics = "user-photo-upload-completed-topic", groupId = "user-service")
+    public void consumeUserPhotoUploadCompletedEvent(ConsumerRecord<String, byte[]> record) {
         try {
-            UserEvent event = UserEvent.parseFrom(record.value());
+            UserPhotoUploadCompleted event = UserPhotoUploadCompleted.parseFrom(record.value());
 
-            if (event.getEventType().equals("USER_PHOTO_UPLOAD_COMPLETED")) {
-                UUID userId = UUID.fromString(event.getUserId());
+            UUID userId = UUID.fromString(event.getUserId());
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                User user = userRepository.findById(userId)
-                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+            user.setPhotoUrl(event.getNewPhotoUrl());
+            userRepository.save(user);
 
-                user.setPhotoUrl(event.getPhotoUrl());
-                userRepository.save(user);
-
-                log.info("Updated user [{}] with new photo URL.", userId);
-            }
+            log.info("Updated user [{}] with new photo URL.", userId);
 
         } catch (Exception e) {
-            log.error("Error handling USER_PHOTO_UPLOAD_COMPLETED event: {}", e.getMessage());
+            log.error("Error handling UserPhotoUploadCompleted event: {}", e.getMessage());
         }
     }
 }

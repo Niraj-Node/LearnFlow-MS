@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package user.events;
+package cloudinary.events;
 
 message UserPhotoUpdated {
   string userId = 1;

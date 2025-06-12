@@ -1,7 +1,6 @@
 package com.lms.cloudinaryservice.kafka;
 
-import cloudinary.events.UserEventOuterClass.UserEvent;
-import com.lms.cloudinaryservice.model.UserEventType;
+import user.events.UserEvent.UserPhotoUploadCompleted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -17,18 +16,17 @@ public class KafkaProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void produceUserEvent(String userId, String photoUrl, UserEventType eventType) {
-        UserEvent event = UserEvent.newBuilder()
+    public void produceUserPhotoUploadCompletedEvent(String userId, String newPhotoUrl) {
+        UserPhotoUploadCompleted event = UserPhotoUploadCompleted.newBuilder()
                 .setUserId(userId)
-                .setEventType(eventType.name())
-                .setPhotoUrl(photoUrl)
+                .setNewPhotoUrl(newPhotoUrl)
                 .build();
 
         try {
-            kafkaTemplate.send("user", event.toByteArray());
-            log.info("Produced USER_PHOTO_UPLOAD_COMPLETED event for userId={}, url={}", userId, photoUrl);
+            kafkaTemplate.send("user-photo-upload-completed-topic", event.toByteArray());
+            log.info("Produced UserPhotoUploadCompleted event for userId={}, url={}", userId, newPhotoUrl);
         } catch (Exception e) {
-            log.error("Failed to produce USER_PHOTO_UPLOAD_COMPLETED event: {}", e.getMessage());
+            log.error("Failed to produce UserPhotoUploadCompleted event: {}", e.getMessage());
         }
     }
 }

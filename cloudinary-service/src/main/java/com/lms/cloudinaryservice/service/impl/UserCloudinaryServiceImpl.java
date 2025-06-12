@@ -2,7 +2,6 @@ package com.lms.cloudinaryservice.service.impl;
 
 import com.cloudinary.Cloudinary;
 import com.lms.cloudinaryservice.kafka.KafkaProducer;
-import com.lms.cloudinaryservice.model.UserEventType;
 import com.lms.cloudinaryservice.service.UserCloudinaryService;
 import com.lms.cloudinaryservice.util.CloudinaryUtil;
 import lombok.RequiredArgsConstructor;
@@ -18,19 +17,22 @@ public class UserCloudinaryServiceImpl implements UserCloudinaryService {
     private final KafkaProducer kafkaProducer;
 
     @Override
-    public void handleUserPhotoUpdate(String userId, String oldUrl, String newBase64) {
+    public void handleUserPhotoUpdate(String userId, String oldUrl, byte[] imageBytes) {
         try {
             if (oldUrl != null && !oldUrl.isEmpty()) {
                 String publicId = CloudinaryUtil.extractPublicId(oldUrl);
                 CloudinaryUtil.deleteImage(cloudinary, publicId);
             }
 
+            // Convert byte[] to base64 String
+            String newBase64 = java.util.Base64.getEncoder().encodeToString(imageBytes);
             Map uploadResult = CloudinaryUtil.uploadImage(cloudinary, newBase64);
             String newUrl = uploadResult.get("secure_url").toString();
 
             System.out.println("Uploaded New Photo to Cloudinary: " + newUrl);
-            // Emit a success event with newUrl
-            kafkaProducer.produceUserEvent(userId, newUrl,UserEventType.USER_PHOTO_UPLOAD_COMPLETED);
+
+            // Emit success event using new Protobuf message
+            kafkaProducer.produceUserPhotoUploadCompletedEvent(userId, newUrl);
 
         } catch (Exception e) {
             throw new RuntimeException("Photo update failed in Cloudinary", e);

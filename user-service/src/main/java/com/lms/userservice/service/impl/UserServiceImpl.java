@@ -2,13 +2,11 @@ package com.lms.userservice.service.impl;
 
 import com.lms.userservice.dto.RegisterRequest;
 import com.lms.userservice.dto.UserResponse;
-import com.lms.userservice.enums.Role;
 import com.lms.userservice.exception.ResourceNotFoundException;
 import com.lms.userservice.exception.UserAlreadyExistsException;
 import com.lms.userservice.kafka.KafkaProducer;
 import com.lms.userservice.mapper.UserMapper;
 import com.lms.userservice.model.User;
-import com.lms.userservice.enums.UserEventType;
 import com.lms.userservice.repository.UserRepository;
 import com.lms.userservice.service.UserService;
 import com.lms.userservice.util.PasswordUtil;
@@ -17,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Base64;
 import java.util.UUID;
 
 @Service
@@ -59,16 +56,13 @@ public class UserServiceImpl implements UserService {
 
         if (profilePhoto != null && !profilePhoto.isEmpty()) {
             try {
-                // Convert MultipartFile to base64 string
-                String base64Image = "data:" + profilePhoto.getContentType() + ";base64," +
-                        Base64.getEncoder().encodeToString(profilePhoto.getBytes());
+                byte[] imageBytes = profilePhoto.getBytes();
 
                 // Send Kafka event to Cloudinary microservice
-                kafkaProducer.produceUserEvent(
+                kafkaProducer.produceUserPhotoUpdatedEvent(
                         user.getId().toString(),
                         user.getPhotoUrl() != null ? user.getPhotoUrl() : "",
-                        base64Image,
-                        UserEventType.USER_PHOTO_UPDATED
+                        imageBytes
                 );
 
             } catch (Exception e) {

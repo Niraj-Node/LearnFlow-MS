@@ -1,11 +1,12 @@
 package com.lms.cloudinaryservice.kafka;
 
-import cloudinary.events.UserEventOuterClass.UserEvent;
+import user.events.UserEvent.UserPhotoUpdated;
 import com.google.protobuf.InvalidProtocolBufferException;
-import com.lms.cloudinaryservice.model.UserEventType;
 import com.lms.cloudinaryservice.service.UserCloudinaryService;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -13,16 +14,20 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class KafkaConsumer {
 
+    private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
     private final UserCloudinaryService userCloudinaryService;
 
-    @KafkaListener(topics = "user", groupId = "cloudinary-service")
-    public void consumeUserEvent(ConsumerRecord<String, byte[]> record) {
+    @KafkaListener(topics = "user-photo-updated-topic", groupId = "cloudinary-service")
+    public void consumeUserPhotoUpdatedEvent(ConsumerRecord<String, byte[]> record) {
         try {
-            UserEvent event = UserEvent.parseFrom(record.value());
+            UserPhotoUpdated event = UserPhotoUpdated.parseFrom(record.value());
 
-            if (event.getEventType().equals(UserEventType.USER_PHOTO_UPDATED.name())) {
-                userCloudinaryService.handleUserPhotoUpdate(event.getUserId(), event.getOldPhotoUrl(), event.getNewPhotoBase64());
-            }
+            userCloudinaryService.handleUserPhotoUpdate(
+                    event.getUserId(),
+                    event.getOldPhotoUrl(),
+                    event.getImageData().toByteArray()
+            );
+            log.info("Consumed UserPhotoUpdated event for userId={}", event.getUserId());
 
         } catch (InvalidProtocolBufferException e) {
             System.err.println("Error parsing event: " + e.getMessage());
