@@ -35,7 +35,6 @@ public class User {
     @Column(nullable = false)
     private Role role = Role.STUDENT;
 
-    @Column(nullable = false)
     private String photoUrl = "";
 
     @ElementCollection(fetch = FetchType.LAZY)

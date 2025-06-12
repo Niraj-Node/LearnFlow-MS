@@ -13,8 +13,13 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
-                .csrf(AbstractHttpConfigurer::disable);
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/login", "/logout", "/validate").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .logout(logout -> logout.disable()); // disable Spring's default logout
 
         return http.build();
     }
