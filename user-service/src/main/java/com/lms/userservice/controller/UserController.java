@@ -1,5 +1,6 @@
 package com.lms.userservice.controller;
 
+import com.lms.userservice.auth.UserContextHolder;
 import com.lms.userservice.dto.RegisterRequest;
 import com.lms.userservice.dto.UserResponse;
 import com.lms.userservice.service.UserService;
@@ -33,11 +34,8 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<?> getUserProfile(HttpServletRequest request) {
-        String userIdHeader = request.getHeader("X-User-Id");
-        if (userIdHeader == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
-        }
-        UserResponse user = userService.getUserProfile(UUID.fromString(userIdHeader));
+        UUID userId = UserContextHolder.getCurrentUserId();
+        UserResponse user = userService.getUserProfile(userId);
         return ResponseEntity.ok(Map.of("success", true, "user", user));
     }
 
@@ -47,11 +45,8 @@ public class UserController {
             @RequestParam(required = false) String name,
             @RequestParam(required = false) MultipartFile profilePhoto
     ) {
-        String userIdHeader = request.getHeader("X-User-Id");
-        if (userIdHeader == null) {
-            return ResponseEntity.status(401).body(Map.of("success", false, "message", "Unauthorized"));
-        }
-        UserResponse updatedUser = userService.updateProfile(UUID.fromString(userIdHeader), name, profilePhoto);
+        UUID userId = UserContextHolder.getCurrentUserId();
+        UserResponse updatedUser = userService.updateProfile(userId, name, profilePhoto);
         return ResponseEntity.ok(Map.of("success", true, "user", updatedUser));
     }
 }
