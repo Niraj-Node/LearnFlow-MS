@@ -16,7 +16,7 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/login", "/logout", "/validate").permitAll()
+                        .requestMatchers("/login", "/logout").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout(logout -> logout.disable()); // disable Spring's default logout

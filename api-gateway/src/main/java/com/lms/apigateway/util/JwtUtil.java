@@ -1,5 +1,7 @@
-package com.lms.authservice.util;
+package com.lms.apigateway.util;
 
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -7,7 +9,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.util.*;
+import java.util.Base64;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class JwtUtil {
@@ -26,13 +30,20 @@ public class JwtUtil {
         this.secretKey = Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UUID userId, String role) {
-        return Jwts.builder()
-                .subject(userId.toString())
-                .claim("role", role)
-                .issuedAt(new Date())
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24 hours
-                .signWith(secretKey)
-                .compact();
+    public Optional<Map<String, String>> validateAndExtract(String token) {
+        try {
+            Claims claims = Jwts.parser()
+                    .verifyWith(secretKey)
+                    .build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            return Optional.of(Map.of(
+                    "userId", claims.getSubject(),
+                    "role", claims.get("role", String.class)
+            ));
+        } catch (JwtException e) {
+            return Optional.empty();
+        }
     }
 }

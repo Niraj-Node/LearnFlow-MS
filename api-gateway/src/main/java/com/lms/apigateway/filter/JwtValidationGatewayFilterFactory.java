@@ -1,25 +1,25 @@
 package com.lms.apigateway.filter;
 
-import org.springframework.beans.factory.annotation.Value;
+import com.lms.apigateway.util.JwtUtil;
 import org.springframework.cloud.gateway.filter.GatewayFilter;
 import org.springframework.cloud.gateway.filter.factory.AbstractGatewayFilterFactory;
 import org.springframework.http.HttpCookie;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.http.server.reactive.ServerHttpRequest;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFactory<Object> {
 
-    private final WebClient webClient;
+    private final JwtUtil jwtUtil;
 
-    public JwtValidationGatewayFilterFactory(WebClient.Builder webClientBuilder) {
-        this.webClient = webClientBuilder.baseUrl("http://auth-service").build();
+    public JwtValidationGatewayFilterFactory(JwtUtil jwtUtil) {
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -32,25 +32,23 @@ public class JwtValidationGatewayFilterFactory extends AbstractGatewayFilterFact
                 return exchange.getResponse().setComplete();
             }
 
-            return webClient.get()
-                    .uri("/validate")
-                    .cookie("jwt", jwt)
-                    .retrieve()
-                    .bodyToMono(Map.class)
-                    .flatMap(userInfo -> {
-                        // Mutate the request to include headers like X-User-Id, X-Email
-                        ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
-                                .header("X-User-Id", (String) userInfo.get("userId"))
-                                .header("X-Role", (String) userInfo.get("role"))
-                                .build();
+            Optional<Map<String, String>> claimsOptional = jwtUtil.validateAndExtract(jwt);
+            if (claimsOptional.isEmpty()) {
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
+            }
 
-                        ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
-                        return chain.filter(mutatedExchange);
-                    })
-                    .onErrorResume(error -> {
-                        exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                        return exchange.getResponse().setComplete();
-                    });
+            Map<String, String> claims = claimsOptional.get();
+            String userId = claims.get("userId");
+            String role = claims.get("role");
+
+            ServerHttpRequest mutatedRequest = exchange.getRequest().mutate()
+                    .header("X-User-Id", userId)
+                    .header("X-Role", role)
+                    .build();
+
+            ServerWebExchange mutatedExchange = exchange.mutate().request(mutatedRequest).build();
+            return chain.filter(mutatedExchange);
         };
     }
 
