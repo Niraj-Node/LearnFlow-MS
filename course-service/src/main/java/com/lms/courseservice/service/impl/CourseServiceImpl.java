@@ -1,5 +1,6 @@
 package com.lms.courseservice.service.impl;
 
+import com.lms.courseservice.grpc.GrpcUserClient;
 import com.lms.courseservice.kafka.KafkaProducer;
 import com.lms.courseservice.auth.UserContextHolder;
 import com.lms.courseservice.dto.request.CreateCourseRequest;
@@ -12,12 +13,14 @@ import com.lms.courseservice.model.Course;
 import com.lms.courseservice.enums.Role;
 import com.lms.courseservice.repository.CourseRepository;
 import com.lms.courseservice.service.CourseService;
+import com.lms.grpc.SlimUser;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class CourseServiceImpl implements CourseService {
 
     private final KafkaProducer kafkaProducer;
     private final CourseRepository courseRepository;
+    private final GrpcUserClient grpcUserClient;
 
     @Override
     @Transactional
@@ -78,5 +82,36 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.save(course);
 
         return CourseMapper.toSummaryResponse(course);
+    }
+
+    @Override
+    public List<CourseResponse> getPublishedCourses() {
+        List<Course> courses = courseRepository.findByIsPublishedTrue();
+
+        // Step 1: Collect unique creator IDs
+        Set<UUID> creatorIds = courses.stream()
+                .map(Course::getCreatorId)
+                .collect(Collectors.toSet());
+
+        // Step 2: Fetch users in batch using gRPC
+        Map<UUID, SlimUser> userMap = grpcUserClient.getUsersByIds(new ArrayList<>(creatorIds));
+
+        // Step 3: Map users to course responses
+        return courses.stream()
+                .map(course -> {
+                    SlimUser creator = userMap.get(course.getCreatorId());
+                    String name = creator != null ? creator.getName() : null;
+                    String photoUrl = creator != null ? creator.getPhotoUrl() : null;
+                    return CourseMapper.toFullResponse(course, name, photoUrl);
+                })
+                .toList();
+    }
+
+    @Override
+    public List<CourseResponse> getCoursesByCreator(UUID creatorId) {
+        List<Course> courses = courseRepository.findByCreatorId(creatorId);
+        return courses.stream()
+                .map(CourseMapper::toSummaryResponse)
+                .toList();
     }
 }

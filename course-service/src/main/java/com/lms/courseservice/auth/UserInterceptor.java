@@ -14,7 +14,7 @@ import java.util.UUID;
 public class UserInterceptor implements HandlerInterceptor {
 
     private static final List<String> PUBLIC_PATTERNS = List.of(
-            "/users/health"
+            "/courses/public/**"
     );
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();

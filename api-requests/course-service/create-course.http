@@ -1,5 +1,5 @@
 ### GET request to example server
-POST http://localhost:8080/api/creator/courses
+POST http://localhost:8080/api/courses/creator
 Content-Type: application/json
 
 {
