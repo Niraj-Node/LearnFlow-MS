@@ -2,6 +2,7 @@ package com.lms.authservice.service;
 
 import com.lms.authservice.dto.LoginRequestDTO;
 import com.lms.authservice.util.JwtUtil;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -9,18 +10,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class AuthService {
 
     private final UserService userService;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
-
-    public AuthService(UserService userService, PasswordEncoder passwordEncoder,
-                       JwtUtil jwtUtil) {
-        this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-    }
 
     public Optional<String> authenticate(LoginRequestDTO loginRequestDTO) {
         return userService.findByEmail(loginRequestDTO.getEmail())

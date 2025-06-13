@@ -1,5 +1,6 @@
 package com.lms.cloudinaryservice.kafka;
 
+import lombok.RequiredArgsConstructor;
 import user.events.UserEvent.UserPhotoUploadCompleted;
 import course.events.CourseEvent.CourseThumbnailUploaded;
 import org.slf4j.Logger;
@@ -8,14 +9,11 @@ import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class KafkaProducer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class);
     private final KafkaTemplate<String, byte[]> kafkaTemplate;
-
-    public KafkaProducer(KafkaTemplate<String, byte[]> kafkaTemplate) {
-        this.kafkaTemplate = kafkaTemplate;
-    }
 
     public void produceUserPhotoUploadCompletedEvent(String userId, String newPhotoUrl) {
         UserPhotoUploadCompleted event = UserPhotoUploadCompleted.newBuilder()

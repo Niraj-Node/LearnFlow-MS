@@ -5,6 +5,7 @@ import com.lms.grpc.GetUserByEmailResponse;
 import com.lms.grpc.User;
 import com.lms.grpc.UserServiceGrpc;
 import io.grpc.StatusRuntimeException;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -12,15 +13,11 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserService.class);
-
     private final UserServiceGrpc.UserServiceBlockingStub userStub;
-
-    public UserService(UserServiceGrpc.UserServiceBlockingStub userStub) {
-        this.userStub = userStub;
-    }
 
     public Optional<User> findByEmail(String email) {
         try {

@@ -5,6 +5,7 @@ import com.lms.grpc.GetUsersByIdsResponse;
 import com.lms.grpc.UserServiceGrpc;
 import io.grpc.StatusRuntimeException;
 import com.lms.grpc.SlimUser;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -16,14 +17,11 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class GrpcUserClient {
 
     private static final Logger log = LoggerFactory.getLogger(GrpcUserClient.class);
     private final UserServiceGrpc.UserServiceBlockingStub userStub;
-
-    public GrpcUserClient(UserServiceGrpc.UserServiceBlockingStub userStub) {
-        this.userStub = userStub;
-    }
 
     public Map<UUID, SlimUser> getUsersByIds(List<UUID> ids) {
         GetUsersByIdsRequest request = GetUsersByIdsRequest.newBuilder()

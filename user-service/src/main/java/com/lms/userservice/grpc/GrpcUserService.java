@@ -5,6 +5,7 @@ import com.lms.userservice.model.User;
 import com.lms.userservice.repository.UserRepository;
 import io.grpc.Status;
 import io.grpc.stub.StreamObserver;
+import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
 
 import java.util.List;
@@ -12,13 +13,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 @GrpcService
+@RequiredArgsConstructor
 public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
 
     private final UserRepository userRepository;
-
-    public GrpcUserService(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
 
     @Override
     public void getUserByEmail(GetUserByEmailRequest request,

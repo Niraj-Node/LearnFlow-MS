@@ -19,7 +19,6 @@ import java.util.UUID;
 @RequestMapping("/courses")
 @RequiredArgsConstructor
 public class CourseController {
-
     private final CourseService courseService;
 
     @PostMapping("creator")
