@@ -16,4 +16,5 @@ public interface CourseService {
     List<CourseResponse> getCoursesByCreator(UUID creatorId);
     List<CourseResponse> searchCourses(SearchCourseRequest request);
     String togglePublishCourse(UUID userId, UUID courseId, boolean publish);
-    }
+    List<CourseResponse> getPurchasedCourses(UUID userId);
+}

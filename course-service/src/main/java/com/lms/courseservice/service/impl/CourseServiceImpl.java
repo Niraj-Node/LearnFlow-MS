@@ -124,4 +124,13 @@ public class CourseServiceImpl implements CourseService {
         return publish ? "Published" : "Unpublished";
     }
 
+    @Override
+    public List<CourseResponse> getPurchasedCourses(UUID userId) {
+        List<Course> purchased = courseRepository.findByEnrolledStudentIdsContaining(userId);
+        if (purchased.isEmpty()) {
+            throw new ResourceNotFoundException("No purchased courses found");
+        }
+        return CourseUtil.enrichWithCreatorInfo(purchased, grpcUserClient);
+    }
+
 }

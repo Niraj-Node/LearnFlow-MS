@@ -10,4 +10,5 @@ import java.util.UUID;
 public interface CourseRepository extends JpaRepository<Course, UUID>, JpaSpecificationExecutor<Course> {
     List<Course> findByIsPublishedTrue();
     List<Course> findByCreatorId(UUID creatorId);
+    List<Course> findByEnrolledStudentIdsContaining(UUID studentId);
 }

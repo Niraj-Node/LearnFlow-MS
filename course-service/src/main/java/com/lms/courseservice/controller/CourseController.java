@@ -74,4 +74,11 @@ public class CourseController {
         return ResponseEntity.ok(Map.of("message", "Course is " + statusMessage));
     }
 
+    @GetMapping("creator/purchased")
+    public ResponseEntity<?> getPurchasedCourses() {
+        UUID userId = UserContextHolder.getCurrentUserId();
+        List<CourseResponse> purchasedCourses = courseService.getPurchasedCourses(userId);
+        return ResponseEntity.ok(Map.of("courses", purchasedCourses));
+    }
+
 }
