@@ -1,5 +1,7 @@
 package com.lms.courseservice.service.impl;
 
+import com.lms.courseservice.util.CourseUtil;
+import com.lms.courseservice.dto.request.SearchCourseRequest;
 import com.lms.courseservice.grpc.GrpcUserClient;
 import com.lms.courseservice.kafka.KafkaProducer;
 import com.lms.courseservice.auth.UserContextHolder;
@@ -13,7 +15,6 @@ import com.lms.courseservice.model.Course;
 import com.lms.courseservice.enums.Role;
 import com.lms.courseservice.repository.CourseRepository;
 import com.lms.courseservice.service.CourseService;
-import com.lms.grpc.SlimUser;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -87,24 +88,7 @@ public class CourseServiceImpl implements CourseService {
     @Override
     public List<CourseResponse> getPublishedCourses() {
         List<Course> courses = courseRepository.findByIsPublishedTrue();
-
-        // Step 1: Collect unique creator IDs
-        Set<UUID> creatorIds = courses.stream()
-                .map(Course::getCreatorId)
-                .collect(Collectors.toSet());
-
-        // Step 2: Fetch users in batch using gRPC
-        Map<UUID, SlimUser> userMap = grpcUserClient.getUsersByIds(new ArrayList<>(creatorIds));
-
-        // Step 3: Map users to course responses
-        return courses.stream()
-                .map(course -> {
-                    SlimUser creator = userMap.get(course.getCreatorId());
-                    String name = creator != null ? creator.getName() : null;
-                    String photoUrl = creator != null ? creator.getPhotoUrl() : null;
-                    return CourseMapper.toFullResponse(course, name, photoUrl);
-                })
-                .toList();
+        return CourseUtil.enrichWithCreatorInfo(courses, grpcUserClient);
     }
 
     @Override
@@ -114,4 +98,11 @@ public class CourseServiceImpl implements CourseService {
                 .map(CourseMapper::toSummaryResponse)
                 .toList();
     }
+
+    @Override
+    public List<CourseResponse> searchCourses(SearchCourseRequest request) {
+        List<Course> resultCourses = CourseUtil.searchCoursesWithFilter(request, courseRepository);
+        return CourseUtil.enrichWithCreatorInfo(resultCourses, grpcUserClient);
+    }
+
 }

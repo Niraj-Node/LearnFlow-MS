@@ -1,0 +1,9 @@
+### Search Courses (with query only)
+GET http://localhost:8080/api/courses/public/search?query=programming
+Content-Type: application/json
+
+###
+
+### Search Courses (with query + category + sort)
+GET http://localhost:8080/api/courses/public/search?query=spring&categories=Backend&categories=Programming&sortByPrice=low
+Content-Type: application/json

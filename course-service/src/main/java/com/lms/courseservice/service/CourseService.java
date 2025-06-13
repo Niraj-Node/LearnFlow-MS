@@ -2,6 +2,7 @@ package com.lms.courseservice.service;
 
 import com.lms.courseservice.dto.request.CreateCourseRequest;
 import com.lms.courseservice.dto.request.EditCourseRequest;
+import com.lms.courseservice.dto.request.SearchCourseRequest;
 import com.lms.courseservice.dto.response.CourseResponse;
 
 import java.util.List;
@@ -12,4 +13,5 @@ public interface CourseService {
     CourseResponse editCourse(String courseId, EditCourseRequest request);
     List<CourseResponse> getPublishedCourses();
     List<CourseResponse> getCoursesByCreator(UUID creatorId);
+    List<CourseResponse> searchCourses(SearchCourseRequest request);
 }

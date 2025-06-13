@@ -3,6 +3,7 @@ package com.lms.courseservice.controller;
 import com.lms.courseservice.auth.UserContextHolder;
 import com.lms.courseservice.dto.request.CreateCourseRequest;
 import com.lms.courseservice.dto.request.EditCourseRequest;
+import com.lms.courseservice.dto.request.SearchCourseRequest;
 import com.lms.courseservice.dto.response.CourseResponse;
 import com.lms.courseservice.exception.ResourceNotFoundException;
 import com.lms.courseservice.service.CourseService;
@@ -50,6 +51,15 @@ public class CourseController {
         List<CourseResponse> courses = courseService.getCoursesByCreator(userId);
         if (courses.isEmpty()) {
             throw new ResourceNotFoundException("No courses found for the current creator");
+        }
+        return ResponseEntity.ok(Map.of("courses", courses));
+    }
+
+    @GetMapping("public/search")
+    public ResponseEntity<?> searchCourses(@Valid SearchCourseRequest request) {
+        List<CourseResponse> courses = courseService.searchCourses(request);
+        if (courses.isEmpty()) {
+            throw new ResourceNotFoundException("No matching courses found");
         }
         return ResponseEntity.ok(Map.of("courses", courses));
     }
