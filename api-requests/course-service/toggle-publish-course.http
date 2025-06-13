@@ -1,0 +1,7 @@
+### Toggle course to published (assuming it has lectures)
+PATCH http://localhost:8080/api/courses/creator/togglepublish/83daf027-8fbb-494c-8a89-00441d942760?publish=true
+Content-Type: application/json
+
+### Toggle course to unpublished
+PATCH http://localhost:8080/api/courses/creator/togglepublish/83daf027-8fbb-494c-8a89-00441d942760?publish=false
+Content-Type: application/json

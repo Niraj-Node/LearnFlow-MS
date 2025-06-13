@@ -1,5 +1,7 @@
 package com.lms.courseservice.service.impl;
 
+import com.lms.courseservice.exception.BadRequestException;
+import com.lms.courseservice.exception.ForbiddenException;
 import com.lms.courseservice.util.CourseUtil;
 import com.lms.courseservice.dto.request.SearchCourseRequest;
 import com.lms.courseservice.grpc.GrpcUserClient;
@@ -21,7 +23,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public class CourseServiceImpl implements CourseService {
         UUID userId = UserContextHolder.getCurrentUserId();
 
         if (!course.getCreatorId().equals(userId)) {
-            throw new RuntimeException("You are not allowed to edit this course");
+            throw new ForbiddenException("You are not allowed to edit this course");
         }
 
         MultipartFile newThumbnail = request.getCourseThumbnail();
@@ -103,6 +104,24 @@ public class CourseServiceImpl implements CourseService {
     public List<CourseResponse> searchCourses(SearchCourseRequest request) {
         List<Course> resultCourses = CourseUtil.searchCoursesWithFilter(request, courseRepository);
         return CourseUtil.enrichWithCreatorInfo(resultCourses, grpcUserClient);
+    }
+
+    public String togglePublishCourse(UUID userId, UUID courseId, boolean publish) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        if (!course.getCreatorId().equals(userId)) {
+            throw new ForbiddenException("You are not authorized to update this course");
+        }
+
+        if (publish && (course.getLectureIds() == null || course.getLectureIds().isEmpty())) {
+            throw new BadRequestException("Cannot publish a course with no lectures");
+        }
+
+        course.setIsPublished(publish);
+        courseRepository.save(course);
+
+        return publish ? "Published" : "Unpublished";
     }
 
 }

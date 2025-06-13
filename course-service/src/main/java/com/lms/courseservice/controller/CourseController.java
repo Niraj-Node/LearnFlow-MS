@@ -63,4 +63,15 @@ public class CourseController {
         }
         return ResponseEntity.ok(Map.of("courses", courses));
     }
+
+    @PatchMapping("creator/togglepublish/{courseId}")
+    public ResponseEntity<?> togglePublishCourse(
+            @PathVariable UUID courseId,
+            @RequestParam boolean publish
+    ) {
+        UUID userId = UserContextHolder.getCurrentUserId();
+        String statusMessage = courseService.togglePublishCourse(userId, courseId, publish);
+        return ResponseEntity.ok(Map.of("message", "Course is " + statusMessage));
+    }
+
 }
