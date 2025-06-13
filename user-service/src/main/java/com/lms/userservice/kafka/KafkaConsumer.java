@@ -1,5 +1,7 @@
 package com.lms.userservice.kafka;
 
+import com.lms.userservice.enums.Role;
+import course.events.CourseEvent.CourseCreated;
 import cloudinary.events.CloudinaryEvent.UserPhotoUploadCompleted;
 import com.lms.userservice.exception.ResourceNotFoundException;
 import com.lms.userservice.model.User;
@@ -36,6 +38,26 @@ public class KafkaConsumer {
 
         } catch (Exception e) {
             log.error("Error handling UserPhotoUploadCompleted event: {}", e.getMessage());
+        }
+    }
+
+    @KafkaListener(topics = "course-created-topic", groupId = "user-service")
+    public void consumeCourseCreatedEvent(ConsumerRecord<String, byte[]> record) {
+        try {
+            CourseCreated event = CourseCreated.parseFrom(record.value());
+
+            UUID creatorId = UUID.fromString(event.getCreatorId());
+            User user = userRepository.findById(creatorId)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+            if (user.getRole() == Role.STUDENT) {
+                user.setRole(Role.INSTRUCTOR);
+                userRepository.save(user);
+                log.info("User [{}] promoted to INSTRUCTOR after creating course", creatorId);
+            }
+
+        } catch (Exception e) {
+            log.error("Error processing CourseCreated event: {}", e.getMessage(), e);
         }
     }
 }

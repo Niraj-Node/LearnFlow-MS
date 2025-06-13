@@ -1,5 +1,6 @@
 package com.lms.courseservice.service.impl;
 
+import com.lms.courseservice.kafka.KafkaProducer;
 import com.lms.courseservice.auth.UserContextHolder;
 import com.lms.courseservice.dto.request.CreateCourseRequest;
 import com.lms.courseservice.dto.request.EditCourseRequest;
@@ -8,6 +9,7 @@ import com.lms.courseservice.enums.CourseLevel;
 import com.lms.courseservice.exception.ResourceNotFoundException;
 import com.lms.courseservice.mapper.CourseMapper;
 import com.lms.courseservice.model.Course;
+import com.lms.courseservice.enums.Role;
 import com.lms.courseservice.repository.CourseRepository;
 import com.lms.courseservice.service.CourseService;
 import jakarta.transaction.Transactional;
@@ -21,6 +23,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CourseServiceImpl implements CourseService {
 
+    private final KafkaProducer kafkaProducer;
     private final CourseRepository courseRepository;
 
     @Override
@@ -32,6 +35,12 @@ public class CourseServiceImpl implements CourseService {
         course.setCreatorId(UserContextHolder.getCurrentUserId());
 
         Course saved = courseRepository.save(course);
+
+        // produce event if role is STUDENT (not already INSTRUCTOR/ADMIN)
+        if (UserContextHolder.getCurrentUserRole() == Role.STUDENT) {
+            kafkaProducer.sendCourseCreatedEvent(saved.getCreatorId().toString());
+        }
+
         return CourseMapper.toCreateCourseResponse(saved);
     }
 

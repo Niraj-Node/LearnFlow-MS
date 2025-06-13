@@ -1,5 +1,6 @@
 package com.lms.courseservice.auth;
 
+import com.lms.courseservice.enums.Role;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.stereotype.Component;
@@ -30,14 +31,16 @@ public class UserInterceptor implements HandlerInterceptor {
         }
 
         String userId = request.getHeader("X-User-Id");
-        if (userId == null) {
+        String roleHeader = request.getHeader("X-Role");
+        if (userId == null || roleHeader == null) {
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-            response.getWriter().write("Unauthorized: Missing X-User-Id header");
+            response.getWriter().write("Unauthorized: Missing X-User-Id or X-Role header");
             return false;
         }
 
         try {
             UserContextHolder.setCurrentUserId(UUID.fromString(userId));
+            UserContextHolder.setCurrentUserRole(Role.valueOf(roleHeader));
         } catch (IllegalArgumentException e) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
             response.getWriter().write("Invalid UUID format in X-User-Id");
