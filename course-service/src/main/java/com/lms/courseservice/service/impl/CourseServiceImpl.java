@@ -57,8 +57,15 @@ public class CourseServiceImpl implements CourseService {
 
         MultipartFile newThumbnail = request.getCourseThumbnail();
         if (newThumbnail != null && !newThumbnail.isEmpty()) {
-            // TODO: Delete old thumbnail via Kafka
-            // TODO: Upload new thumbnail and update URL (skipped for now)
+            try {
+                kafkaProducer.sendCourseEditedEvent(
+                        courseId,
+                        course.getCourseThumbnail(), // old URL
+                        newThumbnail.getBytes()      // new image bytes
+                );
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to process photo", e);
+            }
         }
 
         course.setCourseTitle(request.getCourseTitle());

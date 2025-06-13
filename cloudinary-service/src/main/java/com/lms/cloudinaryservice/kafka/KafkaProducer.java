@@ -1,6 +1,7 @@
 package com.lms.cloudinaryservice.kafka;
 
 import user.events.UserEvent.UserPhotoUploadCompleted;
+import course.events.CourseEvent.CourseThumbnailUploaded;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -29,4 +30,15 @@ public class KafkaProducer {
             log.error("Failed to produce UserPhotoUploadCompleted event: {}", e.getMessage());
         }
     }
+
+    public void produceCourseThumbnailUploadedEvent(String courseId, String newUrl) {
+        CourseThumbnailUploaded event = CourseThumbnailUploaded.newBuilder()
+                .setCourseId(courseId)
+                .setNewThumbnailUrl(newUrl)
+                .build();
+
+        kafkaTemplate.send("course-thumbnail-uploaded-topic", event.toByteArray());
+        log.info("Produced CourseThumbnailUploaded event for courseId={}, url={}", courseId, newUrl);
+    }
+
 }

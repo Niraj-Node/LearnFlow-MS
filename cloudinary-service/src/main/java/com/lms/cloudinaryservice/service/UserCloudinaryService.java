@@ -1,5 +1,5 @@
 package com.lms.cloudinaryservice.service;
 
 public interface UserCloudinaryService {
-    void handleUserPhotoUpdate(String userId, String oldUrl, byte[] imageBytes);
+    String handleUserPhotoUpdate(String userId, String oldUrl, byte[] imageBytes);
 }

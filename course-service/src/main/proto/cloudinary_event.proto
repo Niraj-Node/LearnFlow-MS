@@ -1,0 +1,13 @@
+syntax = "proto3";
+package cloudinary.events;
+
+message CourseEdited {
+  string courseId = 1;
+  string oldThumbnailUrl = 2;
+  bytes NewImageData = 3;
+}
+
+message CourseThumbnailUploaded {
+  string courseId = 1;
+  string newThumbnailUrl = 2;
+}

@@ -1,5 +1,7 @@
 package com.lms.cloudinaryservice.kafka;
 
+import course.events.CourseEvent.CourseEdited;
+import com.lms.cloudinaryservice.service.CourseCloudinaryService;
 import user.events.UserEvent.UserPhotoUpdated;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.lms.cloudinaryservice.service.UserCloudinaryService;
@@ -16,21 +18,43 @@ public class KafkaConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
     private final UserCloudinaryService userCloudinaryService;
+    private final CourseCloudinaryService courseCloudinaryService;
+    private final KafkaProducer kafkaProducer;
 
     @KafkaListener(topics = "user-photo-updated-topic", groupId = "cloudinary-service")
     public void consumeUserPhotoUpdatedEvent(ConsumerRecord<String, byte[]> record) {
         try {
             UserPhotoUpdated event = UserPhotoUpdated.parseFrom(record.value());
 
-            userCloudinaryService.handleUserPhotoUpdate(
+            String newUrl = userCloudinaryService.handleUserPhotoUpdate(
                     event.getUserId(),
                     event.getOldPhotoUrl(),
                     event.getImageData().toByteArray()
             );
-            log.info("Consumed UserPhotoUpdated event for userId={}", event.getUserId());
+
+            kafkaProducer.produceUserPhotoUploadCompletedEvent(event.getUserId(), newUrl);
+            log.info("Handled UserPhotoUpdated and uploaded Photo for courseId={}", event.getUserId());
 
         } catch (InvalidProtocolBufferException e) {
             System.err.println("Error parsing event: " + e.getMessage());
+        }
+    }
+
+    @KafkaListener(topics = "course-edited-topic", groupId = "cloudinary-service")
+    public void consumeCourseEditedEvent(ConsumerRecord<String, byte[]> record) {
+        try {
+            CourseEdited event = CourseEdited.parseFrom(record.value());
+
+            String newUrl = courseCloudinaryService.handleCourseThumbnailUpdate(
+                    event.getOldThumbnailUrl(),
+                    event.getNewImageData().toByteArray()
+            );
+
+            kafkaProducer.produceCourseThumbnailUploadedEvent(event.getCourseId(), newUrl);
+            log.info("Handled CourseEdited and uploaded thumbnail for courseId={}", event.getCourseId());
+
+        } catch (Exception e) {
+            log.error("Failed to handle CourseEdited event", e);
         }
     }
 }

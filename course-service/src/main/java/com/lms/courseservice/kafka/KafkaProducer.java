@@ -1,5 +1,7 @@
 package com.lms.courseservice.kafka;
 
+import cloudinary.events.CloudinaryEvent.CourseEdited;
+import com.google.protobuf.ByteString;
 import user.events.UserEvent.CourseCreated;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -21,5 +23,16 @@ public class KafkaProducer {
 
         kafkaTemplate.send("course-created-topic", event.toByteArray());
         log.info("Published CourseCreated event for userId={}", creatorId);
+    }
+
+    public void sendCourseEditedEvent(String courseId, String oldThumbnailUrl, byte[] newImageBytes) {
+        CourseEdited event = CourseEdited.newBuilder()
+                .setCourseId(courseId)
+                .setOldThumbnailUrl(oldThumbnailUrl == null ? "" : oldThumbnailUrl)
+                .setNewImageData(ByteString.copyFrom(newImageBytes))
+                .build();
+
+        kafkaTemplate.send("course-edited-topic", event.toByteArray());
+        log.info("Published CourseEdited event for courseId={}", courseId);
     }
 }

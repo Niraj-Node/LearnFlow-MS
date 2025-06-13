@@ -24,8 +24,18 @@ public class CloudinaryUtil {
 
     public static Map uploadImage(Cloudinary cloudinary, String base64) {
         try {
-            byte[] imageBytes = Base64.getDecoder().decode(base64.split(",")[1]);
-            return cloudinary.uploader().upload(imageBytes, ObjectUtils.emptyMap());
+            // If base64 includes a data URI prefix, remove it
+            String pureBase64 = base64.contains(",")
+                    ? base64.split(",")[1]
+                    : base64;
+
+            byte[] imageBytes = Base64.getDecoder().decode(pureBase64);
+
+            // Tell Cloudinary it's a raw image upload (not from file path/URL)
+            Map<String, Object> options = ObjectUtils.asMap("resource_type", "image");
+
+            return cloudinary.uploader().upload(imageBytes, options);
+
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload image to Cloudinary", e);
         }
