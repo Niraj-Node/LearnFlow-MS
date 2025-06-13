@@ -40,5 +40,17 @@ public class CloudinaryUtil {
             throw new RuntimeException("Failed to upload image to Cloudinary", e);
         }
     }
+
+    public static Map uploadVideo(Cloudinary cloudinary, byte[] videoBytes) {
+        try {
+            Map<String, Object> options = ObjectUtils.asMap(
+                    "resource_type", "video"
+            );
+            return cloudinary.uploader().upload(videoBytes, options);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to upload video to Cloudinary", e);
+        }
+    }
+
 }
 
