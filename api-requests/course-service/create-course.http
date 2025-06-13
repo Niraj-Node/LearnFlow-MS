@@ -1,0 +1,8 @@
+### GET request to example server
+POST http://localhost:8080/api/courses/create
+Content-Type: application/json
+
+{
+  "courseTitle": "Introduction to Programming",
+  "category": "Programming"
+}
