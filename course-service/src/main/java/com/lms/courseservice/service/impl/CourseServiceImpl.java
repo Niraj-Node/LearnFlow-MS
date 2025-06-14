@@ -61,6 +61,10 @@ public class CourseServiceImpl implements CourseService {
             throw new ForbiddenException("You are not allowed to edit this course");
         }
 
+        if (request.getCoursePrice() < 50) {
+            throw new BadRequestException("Course price must be at least ₹50 to comply with Stripe minimums.");
+        }
+
         MultipartFile newThumbnail = request.getCourseThumbnail();
         if (newThumbnail != null && !newThumbnail.isEmpty()) {
             try {

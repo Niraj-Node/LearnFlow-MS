@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.lms.grpc";
+package course;
+
+service CourseService {
+  rpc GetCourseDetailsById (GetCourseDetailsByIdRequest) returns (GetCourseDetailsByIdResponse);
+}
+
+message GetCourseDetailsByIdRequest {
+  string courseId = 1;
+}
+
+message GetCourseDetailsByIdResponse {
+  string id = 1;
+  string title = 2;
+  string thumbnail = 3;
+  double price = 4;
+  string creatorId = 5;
+}

@@ -32,14 +32,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.badRequest().body(Map.of("success", false, "message", "Database constraint violation"));
     }
 
-    @ExceptionHandler(ForbiddenException.class)
-    public ResponseEntity<?> handleForbidden(ForbiddenException ex) {
-        return ResponseEntity.status(403).body(Map.of("message", ex.getMessage()));
-    }
-
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<?> handleBadRequest(BadRequestException ex) {
         return ResponseEntity.badRequest().body(Map.of("message", ex.getMessage()));
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<String> handleNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<?> handleForbidden(ForbiddenException ex) {
+        return ResponseEntity.status(403).body(Map.of("message", ex.getMessage()));
     }
 
     @ExceptionHandler(RuntimeException.class)
