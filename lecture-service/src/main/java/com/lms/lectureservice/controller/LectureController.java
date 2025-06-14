@@ -7,6 +7,7 @@ import com.lms.lectureservice.service.LectureService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -19,21 +20,30 @@ public class LectureController {
     private final LectureService lectureService;
 
     @PostMapping("/{courseId}")
-    @ResponseStatus(HttpStatus.CREATED)
-    public LectureResponse createLecture(
+    public ResponseEntity<LectureResponse> createLecture(
             @PathVariable UUID courseId,
             @RequestBody @Valid LectureRequest request
     ) {
         UUID currentUserId = UserContextHolder.getCurrentUserId();
-        return lectureService.createLecture(currentUserId, courseId, request);
+        LectureResponse response = lectureService.createLecture(currentUserId, courseId, request);
+        return ResponseEntity.status(201).body(response);
     }
 
     @PatchMapping("/{lectureId}")
-    public LectureResponse editLecture(
+    public ResponseEntity<LectureResponse> editLecture(
             @PathVariable UUID lectureId,
             @RequestBody LectureRequest request
     ) {
         UUID currentUserId = UserContextHolder.getCurrentUserId();
-        return lectureService.editLecture(currentUserId, lectureId, request);
+        LectureResponse response = lectureService.editLecture(currentUserId, lectureId, request);
+        return ResponseEntity.ok(response);
     }
+
+    @DeleteMapping("/{lectureId}")
+    public ResponseEntity<String> deleteLecture(@PathVariable UUID lectureId) {
+        UUID currentUserId = UserContextHolder.getCurrentUserId();
+        lectureService.deleteLecture(currentUserId, lectureId);
+        return ResponseEntity.ok("Lecture removed successfully.");
+    }
+
 }

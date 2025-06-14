@@ -84,4 +84,20 @@ public class LectureServiceImpl implements LectureService {
         return LectureMapper.toResponseDto(updatedLecture);
     }
 
+    @Override
+    @Transactional
+    public void deleteLecture(UUID currentUserId, UUID lectureId) {
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lecture not found"));
+
+        if (!lecture.getCreatorId().equals(currentUserId)) {
+            throw new ForbiddenException("You are not allowed to delete this lecture.");
+        }
+
+        UUID courseId = lecture.getCourseId();
+        lectureRepository.delete(lecture);
+        // Publish Kafka event
+        kafkaProducer.sendLectureDeletedEvent(courseId, lectureId);
+    }
+
 }

@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface LectureService {
     LectureResponse createLecture(UUID currentUserId, UUID courseId, LectureRequest dto);
     LectureResponse editLecture(UUID currentUserId, UUID lectureId, LectureRequest request);
+    void deleteLecture(UUID currentUserId, UUID lectureId);
 }

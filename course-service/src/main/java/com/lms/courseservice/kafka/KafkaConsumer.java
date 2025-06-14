@@ -1,6 +1,7 @@
 package com.lms.courseservice.kafka;
 
 import lecture.events.LectureEvent.LectureCreated;
+import lecture.events.LectureEvent.LectureDeleted;
 import cloudinary.events.CloudinaryEvent.CourseThumbnailUploaded;
 import com.lms.courseservice.exception.ResourceNotFoundException;
 import com.lms.courseservice.model.Course;
@@ -71,4 +72,19 @@ public class KafkaConsumer {
         }
     }
 
+    @KafkaListener(topics = "lecture-deleted-topic", groupId = "course-service")
+    public void handleLectureDeleted(ConsumerRecord<String, byte[]> record) {
+        try {
+            LectureDeleted event = LectureDeleted.parseFrom(record.value());
+
+            UUID courseId = UUID.fromString(event.getCourseId());
+            UUID lectureId = UUID.fromString(event.getLectureId());
+
+            courseService.removeLectureFromCourse(courseId, lectureId);
+            log.info("Lecture [{}] removed from course [{}]", lectureId, courseId);
+
+        } catch (Exception e) {
+            log.error("Failed to process LectureDeleted event", e);
+        }
+    }
 }

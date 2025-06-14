@@ -19,4 +19,5 @@ public interface CourseService {
     List<CourseResponse> getPurchasedCourses(UUID userId);
     void enrollStudent(UUID courseId, UUID userId);
     void addLectureToCourse(UUID courseId, UUID lectureId);
+    void removeLectureFromCourse(UUID courseId, UUID lectureId);
 }

@@ -159,4 +159,18 @@ public class CourseServiceImpl implements CourseService {
         courseRepository.save(course);
     }
 
+    @Override
+    @Transactional
+    public void removeLectureFromCourse(UUID courseId, UUID lectureId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        course.getLectureIds().remove(lectureId);
+
+        if (course.getLectureIds().isEmpty()) {
+            course.setIsPublished(false); // unpublish if no lectures
+        }
+
+        courseRepository.save(course);
+    }
 }
