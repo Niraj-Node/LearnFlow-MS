@@ -148,4 +148,15 @@ public class CourseServiceImpl implements CourseService {
             courseRepository.save(course);
         }
     }
+
+    @Override
+    @Transactional
+    public void addLectureToCourse(UUID courseId, UUID lectureId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        course.getLectureIds().add(lectureId);
+        courseRepository.save(course);
+    }
+
 }

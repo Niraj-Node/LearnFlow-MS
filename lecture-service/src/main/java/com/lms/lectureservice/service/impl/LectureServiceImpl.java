@@ -7,6 +7,7 @@ import com.lms.lectureservice.dto.LectureRequest;
 import com.lms.lectureservice.dto.LectureResponse;
 import com.lms.lectureservice.exception.ForbiddenException;
 import com.lms.lectureservice.exception.ResourceNotFoundException;
+import com.lms.lectureservice.kafka.KafkaProducer;
 import com.lms.lectureservice.mapper.LectureMapper;
 import com.lms.lectureservice.model.Lecture;
 import com.lms.lectureservice.repository.LectureRepository;
@@ -25,6 +26,7 @@ public class LectureServiceImpl implements LectureService {
 
     private final LectureRepository lectureRepository;
     private final CourseServiceGrpc.CourseServiceBlockingStub courseStub;
+    private final KafkaProducer kafkaProducer;
 
     @Override
     @Transactional
@@ -59,8 +61,7 @@ public class LectureServiceImpl implements LectureService {
 
         lecture = lectureRepository.save(lecture);
 
-        // TODO: Produce Kafka event to notify course-service to add lectureId to course
-
+        kafkaProducer.sendLectureCreatedEvent(courseId, lecture.getId());
         return LectureMapper.toResponseDto(lecture);
     }
 }

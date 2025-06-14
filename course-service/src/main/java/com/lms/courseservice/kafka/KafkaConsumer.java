@@ -1,5 +1,6 @@
 package com.lms.courseservice.kafka;
 
+import lecture.events.LectureEvent.LectureCreated;
 import cloudinary.events.CloudinaryEvent.CourseThumbnailUploaded;
 import com.lms.courseservice.exception.ResourceNotFoundException;
 import com.lms.courseservice.model.Course;
@@ -56,4 +57,18 @@ public class KafkaConsumer {
             log.error("Failed to process CoursePurchaseCompleted event in course-service", e);
         }
     }
+
+    @KafkaListener(topics = "lecture-created-topic", groupId = "course-service")
+    public void handleLectureCreated(ConsumerRecord<String, byte[]> record) {
+        try {
+            LectureCreated event = LectureCreated.parseFrom(record.value());
+            UUID courseId = UUID.fromString(event.getCourseId());
+            UUID lectureId = UUID.fromString(event.getLectureId());
+            courseService.addLectureToCourse(courseId, lectureId);
+            log.info("Lecture [{}] added to course [{}]", lectureId, courseId);
+        } catch (Exception e) {
+            log.error("Failed to process LectureCreated event", e);
+        }
+    }
+
 }

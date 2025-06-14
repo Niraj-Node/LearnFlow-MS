@@ -18,4 +18,5 @@ public interface CourseService {
     String togglePublishCourse(UUID userId, UUID courseId, boolean publish);
     List<CourseResponse> getPurchasedCourses(UUID userId);
     void enrollStudent(UUID courseId, UUID userId);
+    void addLectureToCourse(UUID courseId, UUID lectureId);
 }
