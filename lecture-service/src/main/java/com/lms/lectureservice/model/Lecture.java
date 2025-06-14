@@ -1,6 +1,5 @@
-package com.lms.paymentservice.model;
+package com.lms.lectureservice.model;
 
-import com.lms.paymentservice.enums.Status;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -13,28 +12,26 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "course_purchase", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"courseId", "userId"})
-})
-public class CoursePurchase {
+@Table(name = "lectures")
+public class Lecture {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @Column(nullable = false)
+    private String lectureTitle;
+
+    private String videoUrl;
+
+    private String publicId;
+
+    private Boolean isPreviewFree = false;
+
+    @Column(nullable = false)
     private UUID courseId;
 
     @Column(nullable = false)
-    private UUID userId;
-
-    @Column(nullable = false)
-    private String paymentId;
-
-    @Column(nullable = false)
-    private Double amount;
-
-    @Enumerated(EnumType.STRING)
-    private Status status = Status.PENDING;
+    private UUID creatorId;
 
     @CreationTimestamp
     @Column(updatable = false)
@@ -43,4 +40,3 @@ public class CoursePurchase {
     @UpdateTimestamp
     private Instant updatedAt;
 }
-
