@@ -1,0 +1,19 @@
+syntax = "proto3";
+package com.lms.grpc;
+
+option java_multiple_files = true;
+option java_package = "com.lms.grpc";
+option java_outer_classname = "PaymentProto";
+
+service PaymentService {
+  rpc CheckUserCoursePurchase(CheckUserCoursePurchaseRequest) returns (CheckUserCoursePurchaseResponse);
+}
+
+message CheckUserCoursePurchaseRequest {
+  string userId = 1;
+  string courseId = 2;
+}
+
+message CheckUserCoursePurchaseResponse {
+  bool hasPurchased = 1;
+}

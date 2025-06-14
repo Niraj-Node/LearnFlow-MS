@@ -1,8 +1,6 @@
 package com.lms.lectureservice.service.impl;
 
-import com.lms.grpc.CourseServiceGrpc;
-import com.lms.grpc.GetCourseCreatorRequest;
-import com.lms.grpc.GetCourseCreatorResponse;
+import com.lms.grpc.*;
 import com.lms.lectureservice.dto.LectureRequest;
 import com.lms.lectureservice.dto.LectureResponse;
 import com.lms.lectureservice.exception.ForbiddenException;
@@ -29,6 +27,7 @@ public class LectureServiceImpl implements LectureService {
     private final LectureRepository lectureRepository;
     private final CourseServiceGrpc.CourseServiceBlockingStub courseStub;
     private final KafkaProducer kafkaProducer;
+    private final PaymentServiceGrpc.PaymentServiceBlockingStub paymentStub;
 
     @Override
     @Transactional
@@ -104,9 +103,23 @@ public class LectureServiceImpl implements LectureService {
 
     @Override
     public List<LectureResponse> getLecturesByCourse(UUID currentUserId, UUID courseId) {
-        // Simulate gRPC check to payment-service
-        boolean hasPurchased = false; // replace this with actual gRPC call later
 
+        boolean hasPurchasedTemp;
+
+        try {
+            CheckUserCoursePurchaseResponse response = paymentStub.checkUserCoursePurchase(
+                    CheckUserCoursePurchaseRequest.newBuilder()
+                            .setUserId(currentUserId.toString())
+                            .setCourseId(courseId.toString())
+                            .build()
+            );
+            hasPurchasedTemp = response.getHasPurchased();
+        } catch (StatusRuntimeException e) {
+            System.out.println("gRPC call to payment service failed: " + e.getMessage());
+            hasPurchasedTemp = false;
+        }
+
+        final boolean hasPurchased = hasPurchasedTemp;
         List<Lecture> lectures = lectureRepository.findByCourseId(courseId);
 
         return lectures.stream().map(lecture -> {
@@ -122,6 +135,7 @@ public class LectureServiceImpl implements LectureService {
                 dto.setVideoUrl(lecture.getVideoUrl());
                 dto.setPublicId(lecture.getPublicId());
             }
+
             return dto;
         }).collect(Collectors.toList());
     }
