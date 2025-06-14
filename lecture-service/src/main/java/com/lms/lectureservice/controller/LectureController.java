@@ -10,6 +10,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -46,4 +47,10 @@ public class LectureController {
         return ResponseEntity.ok("Lecture removed successfully.");
     }
 
+    @GetMapping("/{courseId}")
+    public ResponseEntity<List<LectureResponse>> getLecturesForCourse(@PathVariable UUID courseId) {
+        UUID currentUserId = UserContextHolder.getCurrentUserId();
+        List<LectureResponse> lectures = lectureService.getLecturesByCourse(currentUserId, courseId);
+        return ResponseEntity.ok(lectures);
+    }
 }

@@ -1,9 +1,13 @@
-PATCH http://localhost:8080/api/lectures/0feb0069-3f00-49d9-8483-00ce1b4bc8bb
+PATCH http://localhost:8080/api/lectures/6ba26e22-4869-49e9-90a5-dfa866fc9f6d
 Content-Type: application/json
+## rjok5yb0hgvq8pikbt52
+## https://res.cloudinary.com/dwckwrdvx/video/upload/v1749927124/rjok5yb0hgvq8pikbt52.mp4
+## ngwvfzc0ptms4abxywmf
+## https://res.cloudinary.com/dwckwrdvx/video/upload/v1749923522/ngwvfzc0ptms4abxywmf.mp4
 
 {
   "lectureTitle": "Updated Title",
-  "videoUrl": "https://res.cloudinary.com/dwckwrdvx/video/upload/v1749923522/ngwvfzc0ptms4abxywmf.mp4",
-  "publicId": "ngwvfzc0ptms4abxywmf",
-  "isPreviewFree": true
+  "videoUrl": "https://res.cloudinary.com/dwckwrdvx/video/upload/v1749927124/rjok5yb0hgvq8pikbt52.mp4",
+  "publicId": "rjok5yb0hgvq8pikbt52",
+  "isPreviewFree": false
 }

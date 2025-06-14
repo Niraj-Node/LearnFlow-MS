@@ -17,8 +17,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -100,4 +102,27 @@ public class LectureServiceImpl implements LectureService {
         kafkaProducer.sendLectureDeletedEvent(courseId, lectureId);
     }
 
+    @Override
+    public List<LectureResponse> getLecturesByCourse(UUID currentUserId, UUID courseId) {
+        // Simulate gRPC check to payment-service
+        boolean hasPurchased = false; // replace this with actual gRPC call later
+
+        List<Lecture> lectures = lectureRepository.findByCourseId(courseId);
+
+        return lectures.stream().map(lecture -> {
+            LectureResponse dto = new LectureResponse();
+            dto.setId(lecture.getId());
+            dto.setLectureTitle(lecture.getLectureTitle());
+            dto.setCourseId(lecture.getCourseId());
+            dto.setCreatorId(lecture.getCreatorId());
+            dto.setIsPreviewFree(lecture.getIsPreviewFree());
+
+            // Only allow full access if user has purchased or it's a preview
+            if (hasPurchased || Boolean.TRUE.equals(lecture.getIsPreviewFree())) {
+                dto.setVideoUrl(lecture.getVideoUrl());
+                dto.setPublicId(lecture.getPublicId());
+            }
+            return dto;
+        }).collect(Collectors.toList());
+    }
 }
