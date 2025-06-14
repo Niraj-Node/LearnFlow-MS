@@ -42,4 +42,27 @@ public class GrpcCourseService extends CourseServiceGrpc.CourseServiceImplBase {
                     .asRuntimeException());
         }
     }
+
+    @Override
+    public void getCourseCreatorById(GetCourseCreatorRequest request,
+                                     StreamObserver<GetCourseCreatorResponse> responseObserver) {
+        try {
+            UUID courseId = UUID.fromString(request.getCourseId());
+
+            Course course = courseRepository.findById(courseId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+            GetCourseCreatorResponse response = GetCourseCreatorResponse.newBuilder()
+                    .setCreatorId(course.getCreatorId().toString())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+        } catch (Exception e) {
+            responseObserver.onError(Status.NOT_FOUND
+                    .withDescription(e.getMessage())
+                    .asRuntimeException());
+        }
+    }
+
 }
