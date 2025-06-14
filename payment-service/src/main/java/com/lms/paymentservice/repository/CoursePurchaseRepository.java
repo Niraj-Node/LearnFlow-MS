@@ -8,5 +8,6 @@ import java.util.UUID;
 
 public interface CoursePurchaseRepository extends JpaRepository<CoursePurchase, UUID> {
     Optional<CoursePurchase> findByCourseIdAndUserId(UUID courseId, UUID userId);
+    Optional<CoursePurchase> findByPaymentId(String paymentId);
 }
 

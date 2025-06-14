@@ -13,6 +13,7 @@ import java.util.UUID;
 public class UserInterceptor implements HandlerInterceptor {
 
     private static final List<String> PUBLIC_PATTERNS = List.of(
+            "/webhook/stripe"
     );
 
     private final AntPathMatcher pathMatcher = new AntPathMatcher();

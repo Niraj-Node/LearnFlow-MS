@@ -15,7 +15,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CoursePaymentUtil {
 
-    private final Environment environment;
+    private final RequestOptions requestOptions;
 
     public Session createCheckoutSession(UUID courseId, UUID userId, GetCourseDetailsByIdResponse course) {
         try {
@@ -23,15 +23,7 @@ public class CoursePaymentUtil {
                 throw new IllegalArgumentException("Course price must be at least ₹50 to comply with Stripe minimums.");
             }
 
-            // Fetch stripeKey for specific course creator id from DB
-            String stripeKey = environment.getRequiredProperty("stripe.secret.key");
-
-            RequestOptions requestOptions = RequestOptions.builder()
-                    .setApiKey(stripeKey)
-                    .build();
-
             SessionCreateParams params = buildParams(courseId, userId, course);
-
             return Session.create(params, requestOptions);
         } catch (StripeException e) {
             throw new RuntimeException("Stripe API error: " + e.getMessage(), e);
