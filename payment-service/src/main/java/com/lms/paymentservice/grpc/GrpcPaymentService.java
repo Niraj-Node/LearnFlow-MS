@@ -1,8 +1,6 @@
 package com.lms.paymentservice.grpc;
 
-import com.lms.grpc.CheckUserCoursePurchaseRequest;
-import com.lms.grpc.CheckUserCoursePurchaseResponse;
-import com.lms.grpc.PaymentServiceGrpc;
+import com.lms.grpc.*;
 import com.lms.paymentservice.enums.Status;
 import com.lms.paymentservice.repository.CoursePurchaseRepository;
 import io.grpc.stub.StreamObserver;
@@ -40,4 +38,22 @@ public class GrpcPaymentService extends PaymentServiceGrpc.PaymentServiceImplBas
                     .asRuntimeException());
         }
     }
+
+    @Override
+    public void hasAnySuccessfulPurchaseForCourse(HasPurchaseForCourseRequest request,
+                                                  StreamObserver<HasPurchaseForCourseResponse> responseObserver) {
+        String courseId = request.getCourseId();
+
+        boolean exists = coursePurchaseRepository.existsByCourseIdAndStatus(
+                UUID.fromString(courseId), Status.SUCCESS
+        );
+
+        HasPurchaseForCourseResponse response = HasPurchaseForCourseResponse.newBuilder()
+                .setHasPurchase(exists)
+                .build();
+
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
 }

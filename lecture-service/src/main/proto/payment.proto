@@ -7,6 +7,7 @@ option java_outer_classname = "PaymentProto";
 
 service PaymentService {
   rpc CheckUserCoursePurchase(CheckUserCoursePurchaseRequest) returns (CheckUserCoursePurchaseResponse);
+  rpc HasAnySuccessfulPurchaseForCourse(HasPurchaseForCourseRequest) returns (HasPurchaseForCourseResponse);
 }
 
 message CheckUserCoursePurchaseRequest {
@@ -16,4 +17,12 @@ message CheckUserCoursePurchaseRequest {
 
 message CheckUserCoursePurchaseResponse {
   bool hasPurchased = 1;
+}
+
+message HasPurchaseForCourseRequest {
+  string courseId = 1;
+}
+
+message HasPurchaseForCourseResponse {
+  bool hasPurchase = 1;
 }

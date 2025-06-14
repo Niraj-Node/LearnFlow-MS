@@ -75,6 +75,9 @@ public class LectureServiceImpl implements LectureService {
             throw new ForbiddenException("You are not allowed to edit this lecture.");
         }
 
+        UUID courseId = lecture.getCourseId();
+        checkIfCourseIsPurchased(courseId);
+
         // Partial update
         if (request.getLectureTitle() != null) lecture.setLectureTitle(request.getLectureTitle());
         if (request.getVideoUrl() != null) lecture.setVideoUrl(request.getVideoUrl());
@@ -96,6 +99,8 @@ public class LectureServiceImpl implements LectureService {
         }
 
         UUID courseId = lecture.getCourseId();
+        checkIfCourseIsPurchased(courseId);
+
         lectureRepository.delete(lecture);
         // Publish Kafka event
         kafkaProducer.sendLectureDeletedEvent(courseId, lectureId);
@@ -138,5 +143,21 @@ public class LectureServiceImpl implements LectureService {
 
             return dto;
         }).collect(Collectors.toList());
+    }
+
+    private void checkIfCourseIsPurchased(UUID courseId) {
+        try {
+            HasPurchaseForCourseResponse response = paymentStub.hasAnySuccessfulPurchaseForCourse(
+                    HasPurchaseForCourseRequest.newBuilder()
+                            .setCourseId(courseId.toString())
+                            .build()
+            );
+            if (response.getHasPurchase()) {
+                throw new ForbiddenException("At least one user has purchased this course. Modification is not allowed.");
+            }
+        } catch (StatusRuntimeException e) {
+            System.out.println("gRPC call to payment service failed: " + e.getMessage());
+            throw new RuntimeException("Failed to verify course purchase status");
+        }
     }
 }

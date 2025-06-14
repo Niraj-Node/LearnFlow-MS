@@ -11,5 +11,6 @@ public interface CoursePurchaseRepository extends JpaRepository<CoursePurchase, 
     Optional<CoursePurchase> findByCourseIdAndUserId(UUID courseId, UUID userId);
     Optional<CoursePurchase> findByPaymentId(String paymentId);
     boolean existsByUserIdAndCourseIdAndStatus(UUID userId, UUID courseId, Status status);
+    boolean existsByCourseIdAndStatus(UUID courseId, Status status);
 }
 
