@@ -137,4 +137,15 @@ public class CourseServiceImpl implements CourseService {
         return CourseUtil.enrichWithCreatorInfo(purchased, grpcUserClient);
     }
 
+    @Override
+    @Transactional
+    public void enrollStudent(UUID courseId, UUID userId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course not found"));
+
+        if (!course.getEnrolledStudentIds().contains(userId)) {
+            course.getEnrolledStudentIds().add(userId);
+            courseRepository.save(course);
+        }
+    }
 }

@@ -1,6 +1,7 @@
 package com.lms.userservice.kafka;
 
 import com.lms.userservice.enums.Role;
+import com.lms.userservice.service.UserService;
 import course.events.CourseEvent.CourseCreated;
 import cloudinary.events.CloudinaryEvent.UserPhotoUploadCompleted;
 import com.lms.userservice.exception.ResourceNotFoundException;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import payment.events.CoursePurchaseEvent.CoursePurchaseCompleted;
 
 import java.util.UUID;
 
@@ -21,6 +23,7 @@ public class KafkaConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
     private final UserRepository userRepository;
+    private final UserService userService;
 
     @KafkaListener(topics = "user-photo-upload-completed-topic", groupId = "user-service")
     public void consumeUserPhotoUploadCompletedEvent(ConsumerRecord<String, byte[]> record) {
@@ -58,6 +61,23 @@ public class KafkaConsumer {
 
         } catch (Exception e) {
             log.error("Error processing CourseCreated event: {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = "course-purchase-completed-topic", groupId = "user-service")
+    public void handleCoursePurchaseCompleted(ConsumerRecord<String, byte[]> record) {
+        try {
+            CoursePurchaseCompleted event =
+                    CoursePurchaseCompleted.parseFrom(record.value());
+
+            UUID userId = UUID.fromString(event.getUserId());
+            UUID courseId = UUID.fromString(event.getCourseId());
+
+            userService.enrollInCourse(userId, courseId);
+            log.info("User [{}] enrolled in course [{}]", userId, courseId);
+
+        } catch (Exception e) {
+            log.error("Failed to process CoursePurchaseCompleted event in user-service", e);
         }
     }
 }

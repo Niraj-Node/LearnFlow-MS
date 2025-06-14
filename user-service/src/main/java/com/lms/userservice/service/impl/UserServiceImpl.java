@@ -73,4 +73,16 @@ public class UserServiceImpl implements UserService {
         // Save user without photo update (it will be updated after confirmation)
         return UserMapper.toResponse(userRepository.save(user));
     }
+
+    @Override
+    @Transactional
+    public void enrollInCourse(UUID userId, UUID courseId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (!user.getEnrolledCourseIds().contains(courseId)) {
+            user.getEnrolledCourseIds().add(courseId);
+            userRepository.save(user);
+        }
+    }
 }

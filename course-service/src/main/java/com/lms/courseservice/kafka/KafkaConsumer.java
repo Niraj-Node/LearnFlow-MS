@@ -4,12 +4,14 @@ import cloudinary.events.CloudinaryEvent.CourseThumbnailUploaded;
 import com.lms.courseservice.exception.ResourceNotFoundException;
 import com.lms.courseservice.model.Course;
 import com.lms.courseservice.repository.CourseRepository;
+import com.lms.courseservice.service.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import payment.events.CoursePurchaseEvent.CoursePurchaseCompleted;
 
 import java.util.UUID;
 
@@ -19,6 +21,7 @@ public class KafkaConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(KafkaConsumer.class);
     private final CourseRepository courseRepository;
+    private final CourseService courseService;
 
     @KafkaListener(topics = "course-thumbnail-uploaded-topic", groupId = "course-service")
     public void consumeCourseThumbnailUploadedEvent(ConsumerRecord<String, byte[]> record) {
@@ -37,4 +40,20 @@ public class KafkaConsumer {
         }
     }
 
+    @KafkaListener(topics = "course-purchase-completed-topic", groupId = "course-service")
+    public void handleCoursePurchaseCompleted(ConsumerRecord<String, byte[]> record) {
+        try {
+            CoursePurchaseCompleted event =
+                    CoursePurchaseCompleted.parseFrom(record.value());
+
+            UUID courseId = UUID.fromString(event.getCourseId());
+            UUID userId = UUID.fromString(event.getUserId());
+
+            courseService.enrollStudent(courseId, userId);
+            log.info("Course [{}] enrolled student [{}]", courseId, userId);
+
+        } catch (Exception e) {
+            log.error("Failed to process CoursePurchaseCompleted event in course-service", e);
+        }
+    }
 }

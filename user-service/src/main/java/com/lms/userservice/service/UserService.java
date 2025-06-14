@@ -10,4 +10,5 @@ public interface UserService {
     String register(RegisterRequest request);
     UserResponse getUserProfile(UUID id);
     UserResponse updateProfile(UUID id, String name, MultipartFile profilePhoto);
+    void enrollInCourse(UUID userId, UUID courseId);
 }

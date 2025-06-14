@@ -4,6 +4,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.lms.paymentservice.enums.Status;
 import com.lms.paymentservice.exception.PaymentException;
+import com.lms.paymentservice.kafka.KafkaProducer;
 import com.lms.paymentservice.model.CoursePurchase;
 import com.lms.paymentservice.repository.CoursePurchaseRepository;
 import com.lms.paymentservice.service.StripeWebhookService;
@@ -26,6 +27,7 @@ import java.util.Optional;
 public class StripeWebhookServiceImpl implements StripeWebhookService {
 
     private final CoursePurchaseRepository coursePurchaseRepository;
+    private final KafkaProducer kafkaProducer;
 
     @Value("${stripe.webhook.secret}")
     private String endpointSecret;
@@ -87,6 +89,9 @@ public class StripeWebhookServiceImpl implements StripeWebhookService {
         purchase.setStatus(Status.SUCCESS);
         coursePurchaseRepository.save(purchase);
 
-        // TODO: Send Kafka event to user-service and course-service to update enrollment
+        kafkaProducer.sendCoursePurchaseCompletedEvent(
+                purchase.getCourseId().toString(),
+                purchase.getUserId().toString()
+        );
     }
 }

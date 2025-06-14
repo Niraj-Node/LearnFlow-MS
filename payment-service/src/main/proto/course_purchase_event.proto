@@ -1,0 +1,7 @@
+syntax = "proto3";
+package payment.events;
+
+message CoursePurchaseCompleted {
+  string courseId = 1;
+  string userId = 2;
+}
