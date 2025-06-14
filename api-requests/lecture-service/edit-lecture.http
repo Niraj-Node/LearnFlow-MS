@@ -1,0 +1,9 @@
+PATCH http://localhost:8080/api/lectures/0feb0069-3f00-49d9-8483-00ce1b4bc8bb
+Content-Type: application/json
+
+{
+  "lectureTitle": "Updated Title",
+  "videoUrl": "https://res.cloudinary.com/dwckwrdvx/video/upload/v1749923522/ngwvfzc0ptms4abxywmf.mp4",
+  "publicId": "ngwvfzc0ptms4abxywmf",
+  "isPreviewFree": true
+}

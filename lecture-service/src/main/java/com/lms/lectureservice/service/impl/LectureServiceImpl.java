@@ -58,10 +58,30 @@ public class LectureServiceImpl implements LectureService {
         lecture.setLectureTitle(request.getLectureTitle());
         lecture.setCourseId(courseId);
         lecture.setCreatorId(creatorId);
-
         lecture = lectureRepository.save(lecture);
 
         kafkaProducer.sendLectureCreatedEvent(courseId, lecture.getId());
         return LectureMapper.toResponseDto(lecture);
     }
+
+    @Override
+    @Transactional
+    public LectureResponse editLecture(UUID currentUserId, UUID lectureId, LectureRequest request) {
+        Lecture lecture = lectureRepository.findById(lectureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lecture not found"));
+
+        if (!lecture.getCreatorId().equals(currentUserId)) {
+            throw new ForbiddenException("You are not allowed to edit this lecture.");
+        }
+
+        // Partial update
+        if (request.getLectureTitle() != null) lecture.setLectureTitle(request.getLectureTitle());
+        if (request.getVideoUrl() != null) lecture.setVideoUrl(request.getVideoUrl());
+        if (request.getPublicId() != null) lecture.setPublicId(request.getPublicId());
+        if (request.getIsPreviewFree() != null) lecture.setIsPreviewFree(request.getIsPreviewFree());
+
+        Lecture updatedLecture = lectureRepository.save(lecture);
+        return LectureMapper.toResponseDto(updatedLecture);
+    }
+
 }

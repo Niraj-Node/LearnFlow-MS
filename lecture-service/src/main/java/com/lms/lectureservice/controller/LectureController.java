@@ -27,4 +27,13 @@ public class LectureController {
         UUID currentUserId = UserContextHolder.getCurrentUserId();
         return lectureService.createLecture(currentUserId, courseId, request);
     }
+
+    @PatchMapping("/{lectureId}")
+    public LectureResponse editLecture(
+            @PathVariable UUID lectureId,
+            @RequestBody LectureRequest request
+    ) {
+        UUID currentUserId = UserContextHolder.getCurrentUserId();
+        return lectureService.editLecture(currentUserId, lectureId, request);
+    }
 }
