@@ -6,6 +6,7 @@ import com.lms.grpc.CourseServiceGrpc;
 import com.lms.grpc.LectureExistenceAndCountRequest;
 import com.lms.grpc.LectureExistenceAndCountResponse;
 import com.lms.grpc.PaymentServiceGrpc;
+import com.lms.progressservice.dto.CourseProgressResponse;
 import com.lms.progressservice.exception.ForbiddenException;
 import com.lms.progressservice.exception.ResourceNotFoundException;
 import com.lms.progressservice.model.CourseProgress;
@@ -85,5 +86,12 @@ public class CourseProgressServiceImpl implements ICourseProgressService {
             courseProgress.setCompleted(true);
         }
         courseProgressRepository.save(courseProgress);
+    }
+
+    @Override
+    public CourseProgressResponse getCourseProgress(UUID userId, UUID courseId) {
+        return courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .map(progress -> new CourseProgressResponse(progress.getLectureProgress(), progress.isCompleted()))
+                .orElseGet(() -> new CourseProgressResponse(Collections.emptyList(), false));
     }
 }
