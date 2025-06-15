@@ -7,6 +7,7 @@ import com.lms.progressservice.model.CourseProgress;
 import com.lms.progressservice.model.LectureProgress;
 import com.lms.progressservice.repository.CourseProgressRepository;
 import course.events.LectureEvent;
+import user.events.UserEvent.UserCreated;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +16,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import user.events.CourseEvent.CourseCreated;
+import java.util.Optional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -82,4 +84,46 @@ public class KafkaConsumer {
             log.error("Failed to handle LectureCreated event: {}", e.getMessage(), e);
         }
     }
+
+    @KafkaListener(topics = "user-created-topic", groupId = "progress-service-group")
+    @Transactional
+    public void handleUserCreatedEvent(ConsumerRecord<String, byte[]> record) {
+        try {
+            UserCreated event = UserCreated.parseFrom(record.value());
+            UUID userId = UUID.fromString(event.getUserId());
+
+            // 1. Get all distinct courseIds from the DB
+            List<UUID> distinctCourseIds = courseProgressRepository.findDistinctCourseIds();
+            List<CourseProgress> progressList = new ArrayList<>();
+
+            for (UUID courseId : distinctCourseIds) {
+
+                // 2. Fetch any one CourseProgress for the course to extract its lectureProgress list
+                Optional<CourseProgress> existing = courseProgressRepository
+                        .findFirstByCourseId(courseId);
+                if (existing.isEmpty()) continue;
+
+                List<LectureProgress> lectureProgressCopy = existing.get().getLectureProgress().stream()
+                        .map(lp -> new LectureProgress(lp.getLectureId(), false)) // copy with viewed=false
+                        .toList();
+
+                CourseProgress progress = CourseProgress.builder()
+                        .userId(userId)
+                        .courseId(courseId)
+                        .lectureProgress(lectureProgressCopy)
+                        .completed(false)
+                        .build();
+
+                progressList.add(progress);
+            }
+
+            courseProgressRepository.saveAll(progressList);
+            log.info("Initialized CourseProgress for new userId={} for {} existing courses",
+                    userId, progressList.size());
+
+        } catch (Exception e) {
+            log.error("Failed to handle UserCreated event: {}", e.getMessage(), e);
+        }
+    }
+
 }

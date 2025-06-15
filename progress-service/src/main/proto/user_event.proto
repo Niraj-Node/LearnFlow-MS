@@ -1,0 +1,6 @@
+syntax = "proto3";
+package user.events;
+
+message UserCreated {
+  string userId = 1;
+}

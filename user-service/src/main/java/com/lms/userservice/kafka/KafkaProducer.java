@@ -1,5 +1,6 @@
 package com.lms.userservice.kafka;
 
+import progress.events.ProgressEvent.UserCreated;
 import cloudinary.events.CloudinaryEvent.UserPhotoUpdated;
 import com.google.protobuf.ByteString;
 import lombok.RequiredArgsConstructor;
@@ -28,5 +29,14 @@ public class KafkaProducer {
         } catch (Exception e) {
             log.error("Error sending UserPhotoUpdated event: {}", e.getMessage());
         }
+    }
+
+    public void sendUserCreatedEvent(String userId) {
+        UserCreated event = UserCreated.newBuilder()
+                .setUserId(userId)
+                .build();
+
+        kafkaTemplate.send("user-created-topic", event.toByteArray());
+        log.info("Published UserCreated event for userId={}", userId);
     }
 }

@@ -36,6 +36,7 @@ public class UserServiceImpl implements UserService {
 //        user.setRole(Role.STUDENT);
         userRepository.save(user);
 
+        kafkaProducer.sendUserCreatedEvent(user.getId().toString());
         return "Account created successfully.";
     }
 
