@@ -68,6 +68,40 @@ public class CourseProgressServiceImpl implements ICourseProgressService {
         return new CourseProgressResponse(progress.getLectureProgress(), progress.isCompleted());
     }
 
+    @Override
+    @Transactional
+    public void markCourseAsCompleted(UUID userId, UUID courseId) {
+        if (!hasUserPurchasedCourse(userId, courseId)) {
+            throw new ForbiddenException("Course not purchased by user");
+        }
+
+        CourseProgress courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course progress not found"));
+
+        for (LectureProgress lp : courseProgress.getLectureProgress()) {
+            lp.setViewed(true);
+        }
+        courseProgress.setCompleted(true);
+        courseProgressRepository.save(courseProgress);
+    }
+
+    @Override
+    @Transactional
+    public void markCourseAsIncomplete(UUID userId, UUID courseId) {
+        if (!hasUserPurchasedCourse(userId, courseId)) {
+            throw new ForbiddenException("Course not purchased by user");
+        }
+
+        CourseProgress courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course progress not found"));
+
+        for (LectureProgress lp : courseProgress.getLectureProgress()) {
+            lp.setViewed(false);
+        }
+        courseProgress.setCompleted(false);
+        courseProgressRepository.save(courseProgress);
+    }
+
     // Helper Methods
 
     private boolean hasUserPurchasedCourse(UUID userId, UUID courseId) {

@@ -33,5 +33,19 @@ public class ProgressController {
         CourseProgressResponse response = courseProgressService.getCourseProgress(userId, courseId);
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/course/complete/{courseId}")
+    public ResponseEntity<String> markCourseAsCompleted(@PathVariable UUID courseId) {
+        UUID userId = UserContextHolder.getCurrentUserId();
+        courseProgressService.markCourseAsCompleted(userId, courseId);
+        return ResponseEntity.ok("Course marked as completed.");
+    }
+
+    @PostMapping("/course/incomplete/{courseId}")
+    public ResponseEntity<String> markCourseAsIncomplete(@PathVariable UUID courseId) {
+        UUID userId = UserContextHolder.getCurrentUserId();
+        courseProgressService.markCourseAsIncomplete(userId, courseId);
+        return ResponseEntity.ok("Course marked as incomplete.");
+    }
 }
 
