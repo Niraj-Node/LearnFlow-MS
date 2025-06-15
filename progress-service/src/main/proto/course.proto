@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.lms.grpc";
+package course;
+
+service CourseService {
+  rpc CheckLectureExistenceAndGetCount(LectureExistenceAndCountRequest) returns (LectureExistenceAndCountResponse);
+}
+
+message LectureExistenceAndCountRequest {
+  string courseId = 1;
+  string lectureId = 2;
+}
+
+message LectureExistenceAndCountResponse {
+  bool lectureExists = 1;
+  int32 totalLectures = 2;
+}

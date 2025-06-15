@@ -9,6 +9,7 @@ import io.grpc.stub.StreamObserver;
 import lombok.RequiredArgsConstructor;
 import net.devh.boot.grpc.server.service.GrpcService;
 
+import java.util.List;
 import java.util.UUID;
 
 @GrpcService
@@ -65,4 +66,28 @@ public class GrpcCourseService extends CourseServiceGrpc.CourseServiceImplBase {
         }
     }
 
+    @Override
+    public void checkLectureExistenceAndGetCount(LectureExistenceAndCountRequest request,
+                                                 StreamObserver<LectureExistenceAndCountResponse> responseObserver) {
+        try {
+            UUID courseId = UUID.fromString(request.getCourseId());
+            UUID lectureId = UUID.fromString(request.getLectureId());
+
+            List<UUID> lectureIds = courseRepository.findLectureIdsByCourseId(courseId);
+            boolean lectureExists = lectureIds.contains(lectureId);
+
+            LectureExistenceAndCountResponse response = LectureExistenceAndCountResponse.newBuilder()
+                    .setLectureExists(lectureExists)
+                    .setTotalLectures(lectureIds.size())
+                    .build();
+
+            responseObserver.onNext(response);
+            responseObserver.onCompleted();
+
+        } catch (Exception e) {
+            responseObserver.onError(Status.INTERNAL
+                    .withDescription("Failed to check lecture existence: " + e.getMessage())
+                    .asRuntimeException());
+        }
+    }
 }

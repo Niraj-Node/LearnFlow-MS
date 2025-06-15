@@ -7,6 +7,7 @@ package course;
 service CourseService {
   rpc GetCourseDetailsById (GetCourseDetailsByIdRequest) returns (GetCourseDetailsByIdResponse);
   rpc GetCourseCreatorById(GetCourseCreatorRequest) returns (GetCourseCreatorResponse);
+  rpc CheckLectureExistenceAndGetCount(LectureExistenceAndCountRequest) returns (LectureExistenceAndCountResponse);
 }
 
 message GetCourseCreatorRequest {
@@ -15,6 +16,16 @@ message GetCourseCreatorRequest {
 
 message GetCourseCreatorResponse {
   string creatorId = 1;
+}
+
+message LectureExistenceAndCountRequest {
+  string courseId = 1;
+  string lectureId = 2;
+}
+
+message LectureExistenceAndCountResponse {
+  bool lectureExists = 1;
+  int32 totalLectures = 2;
 }
 
 message GetCourseDetailsByIdRequest {
