@@ -1,5 +1,7 @@
-target
-.git
-.gitignore
+.idea/
+*.iml
+target/
+.git/
+.gitignore/
 README.md
 HELP.md

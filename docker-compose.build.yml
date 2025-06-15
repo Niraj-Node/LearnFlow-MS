@@ -1,0 +1,326 @@
+version: '3.8'
+
+services:
+
+  # Kafka (Bitnami)
+  kafka:
+    image: docker.io/bitnami/kafka:3.8
+    container_name: kafka
+    ports:
+      - "9092:9092"
+      - "9094:9094"
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka:9093
+      # Listeners
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9094
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # PostgreSQL Databases
+
+  # User-DB
+  user-db:
+    image: postgres:16
+    container_name: user-db
+    ports:
+      - "5000:5432"
+    volumes:
+      - user-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME_USER}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD_USER}
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME_USER}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Course-DB
+  course-db:
+    image: postgres:16
+    container_name: course-db
+    ports:
+      - "5001:5432"
+    volumes:
+      - course-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME_COURSE}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD_COURSE}
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME_COURSE}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Lecture-DB
+  lecture-db:
+    image: postgres:16
+    container_name: lecture-db
+    ports:
+      - "5002:5432"
+    volumes:
+      - lecture-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME_LECTURE}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD_LECTURE}
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME_LECTURE}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Progress-DB
+  progress-db:
+    image: postgres:16
+    container_name: progress-db
+    ports:
+      - "5003:5432"
+    volumes:
+      - progress-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME_PROGRESS}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD_PROGRESS}
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME_PROGRESS}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Payment-DB
+  payment-db:
+    image: postgres:16
+    container_name: payment-db
+    ports:
+      - "5004:5432"
+    volumes:
+      - payment-db:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=db
+      - POSTGRES_USER=${SPRING_DATASOURCE_USERNAME_PAYMENT}
+      - POSTGRES_PASSWORD=${SPRING_DATASOURCE_PASSWORD_PAYMENT}
+    networks:
+      - learnflow-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${SPRING_DATASOURCE_USERNAME_PAYMENT}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Eureka Discovery Server
+  discovery-server:
+    build:
+      context: ./discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # User Service
+  user-service:
+    build:
+      context: ./user-service
+    container_name: user-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://user-db:5432/db
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_USER}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_USER}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_SQL_INIT_MODE=${SPRING_SQL_INIT_MODE}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - user-db
+      - kafka
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # Course Service
+  course-service:
+    build:
+      context: ./course-service
+    container_name: course-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://course-db:5432/db
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_COURSE}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_COURSE}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_SQL_INIT_MODE=${SPRING_SQL_INIT_MODE}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - course-db
+      - kafka
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # Auth Service
+  auth-service:
+    build:
+      context: ./auth-service
+    container_name: auth-service
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # Cloudinary Service
+  cloudinary-service:
+    build:
+      context: ./cloudinary-service
+    container_name: cloudinary-service
+    environment:
+      - CLOUDINARY_CLOUD_NAME=${CLOUDINARY_CLOUD_NAME}
+      - CLOUDINARY_API_KEY=${CLOUDINARY_API_KEY}
+      - CLOUDINARY_API_SECRET=${CLOUDINARY_API_SECRET}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - kafka
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # Lecture Service
+  lecture-service:
+    build:
+      context: ./lecture-service
+    container_name: lecture-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://lecture-db:5432/db
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_LECTURE}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_LECTURE}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_SQL_INIT_MODE=${SPRING_SQL_INIT_MODE}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - lecture-db
+      - kafka
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # Progress Service
+  progress-service:
+    build:
+      context: ./progress-service
+    container_name: progress-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://progress-db:5432/db
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_PROGRESS}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_PROGRESS}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_SQL_INIT_MODE=${SPRING_SQL_INIT_MODE}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - progress-db
+      - kafka
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # Payment Service
+  payment-service:
+    build:
+      context: ./payment-service
+    container_name: payment-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://payment-db:5432/db
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME_PAYMENT}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD_PAYMENT}
+      - SPRING_JPA_HIBERNATE_DDL_AUTO=${SPRING_JPA_HIBERNATE_DDL_AUTO}
+      - SPRING_SQL_INIT_MODE=${SPRING_SQL_INIT_MODE}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - KAFKA_BOOTSTRAP_SERVERS=${KAFKA_BOOTSTRAP_SERVERS}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    depends_on:
+      - payment-db
+      - kafka
+      - discovery-server
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    depends_on:
+      - discovery-server
+      - user-service
+      - course-service
+      - auth-service
+      - cloudinary-service
+      - lecture-service
+      - progress-service
+      - payment-service
+      - kafka
+      - payment-db
+      - user-db
+      - course-db
+      - lecture-db
+      - progress-db
+
+    environment:
+      - JWT_SECRET=${JWT_SECRET}
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka
+    networks:
+      - learnflow-network
+    restart: unless-stopped
+
+networks:
+  learnflow-network:
+    driver: bridge
+
+volumes:
+  kafka_data:
+  user-db:
+  course-db:
+  lecture-db:
+  progress-db:
+  payment-db:

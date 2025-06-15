@@ -2,7 +2,7 @@ package com.lms.courseservice.kafka;
 
 import cloudinary.events.CloudinaryEvent.CourseEdited;
 import com.google.protobuf.ByteString;
-import user.events.UserEvent.CourseCreated;
+import user.events.UserProgressEvent.CourseCreated;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
