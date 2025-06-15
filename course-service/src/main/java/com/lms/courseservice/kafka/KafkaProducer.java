@@ -16,8 +16,9 @@ public class KafkaProducer {
     private final KafkaTemplate<String, byte[]> kafkaTemplate;
     private static final Logger log = LoggerFactory.getLogger(KafkaProducer.class);
 
-    public void sendCourseCreatedEvent(String creatorId) {
+    public void sendCourseCreatedEvent(String courseId, String creatorId) {
         CourseCreated event = CourseCreated.newBuilder()
+                .setCourseId(courseId)
                 .setCreatorId(creatorId)
                 .build();
 

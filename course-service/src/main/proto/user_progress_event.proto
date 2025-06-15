@@ -2,5 +2,6 @@ syntax = "proto3";
 package user.events;
 
 message CourseCreated {
-  string creatorId = 1;
+  string courseId = 1;
+  string creatorId = 2;
 }

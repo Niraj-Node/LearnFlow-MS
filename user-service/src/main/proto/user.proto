@@ -7,6 +7,7 @@ package user;
 service UserService {
   rpc GetUserByEmail (GetUserByEmailRequest) returns (GetUserByEmailResponse);
   rpc GetUsersByIds (GetUsersByIdsRequest) returns (GetUsersByIdsResponse);
+  rpc getAllUserIds (GetAllUserIdsRequest) returns (GetAllUserIdsResponse);
 }
 
 message GetUserByEmailRequest {
@@ -38,4 +39,9 @@ message SlimUser {
   string id = 1;
   string name = 2;
   string photoUrl = 3;
+}
+
+message GetAllUserIdsRequest {}
+message GetAllUserIdsResponse {
+  repeated string userIds = 1;
 }

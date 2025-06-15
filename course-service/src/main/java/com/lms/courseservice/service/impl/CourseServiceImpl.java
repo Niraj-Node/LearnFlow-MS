@@ -42,10 +42,7 @@ public class CourseServiceImpl implements CourseService {
 
         Course saved = courseRepository.save(course);
 
-        // produce event if role is STUDENT (not already INSTRUCTOR/ADMIN)
-        if (UserContextHolder.getCurrentUserRole() == Role.STUDENT) {
-            kafkaProducer.sendCourseCreatedEvent(saved.getCreatorId().toString());
-        }
+        kafkaProducer.sendCourseCreatedEvent(saved.getId().toString(),saved.getCreatorId().toString());
 
         return CourseMapper.toCreateCourseResponse(saved);
     }

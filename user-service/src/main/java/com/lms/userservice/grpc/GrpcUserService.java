@@ -70,4 +70,18 @@ public class GrpcUserService extends UserServiceGrpc.UserServiceImplBase {
         responseObserver.onNext(response);
         responseObserver.onCompleted();
     }
+
+    @Override
+    public void getAllUserIds(GetAllUserIdsRequest request,
+                              StreamObserver<GetAllUserIdsResponse> responseObserver) {
+        List<UUID> userIds = userRepository.findAllUserIds();
+        GetAllUserIdsResponse response = GetAllUserIdsResponse.newBuilder()
+                .addAllUserIds(userIds.stream()
+                        .map(UUID::toString)
+                        .toList())
+                .build();
+        responseObserver.onNext(response);
+        responseObserver.onCompleted();
+    }
+
 }
