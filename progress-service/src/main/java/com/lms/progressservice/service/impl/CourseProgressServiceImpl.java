@@ -3,8 +3,6 @@ package com.lms.progressservice.service.impl;
 import com.lms.grpc.CheckUserCoursePurchaseRequest;
 import com.lms.grpc.CheckUserCoursePurchaseResponse;
 import com.lms.grpc.CourseServiceGrpc;
-import com.lms.grpc.LectureExistenceAndCountRequest;
-import com.lms.grpc.LectureExistenceAndCountResponse;
 import com.lms.grpc.PaymentServiceGrpc;
 import com.lms.progressservice.dto.CourseProgressResponse;
 import com.lms.progressservice.exception.ForbiddenException;
@@ -34,64 +32,51 @@ public class CourseProgressServiceImpl implements ICourseProgressService {
     @Transactional
     public void updateLectureProgress(UUID courseId, UUID lectureId, UUID userId) {
         // Check if course is purchased by current user
-        CheckUserCoursePurchaseResponse purchaseResponse = paymentStub.checkUserCoursePurchase(
-                CheckUserCoursePurchaseRequest.newBuilder()
-                        .setUserId(userId.toString())
-                        .setCourseId(courseId.toString())
-                        .build()
-        );
-        if (!purchaseResponse.getHasPurchased()) {
+        if (hasUserPurchasedCourse(userId, courseId)) {
             throw new ForbiddenException("Course not purchased by user");
         }
 
-        // Check lecture exists and get total count
-        LectureExistenceAndCountResponse courseResponse = courseStub.checkLectureExistenceAndGetCount(
-                LectureExistenceAndCountRequest.newBuilder()
-                        .setCourseId(courseId.toString())
-                        .setLectureId(lectureId.toString())
-                        .build()
-        );
+        CourseProgress courseProgress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course progress not found"));
 
-        if (!courseResponse.getLectureExists()) {
-            throw new ResourceNotFoundException("Lecture not found in course");
-        }
-
-        int totalLectures = courseResponse.getTotalLectures();
-
-        // Find or create CourseProgress
-        CourseProgress courseProgress = courseProgressRepository
-                .findByUserIdAndCourseId(userId, courseId)
-                .orElseGet(() -> CourseProgress.builder()
-                        .userId(userId)
-                        .courseId(courseId)
-                        .completed(false)
-                        .lectureProgress(new ArrayList<>())
-                        .build());
         // Update lecture viewed status
-        boolean alreadyExists = false;
-        for (LectureProgress lp : courseProgress.getLectureProgress()) {
-            if (lp.getLectureId().equals(lectureId)) {
-                lp.setViewed(true);
-                alreadyExists = true;
-                break;
-            }
+        Optional<LectureProgress> lectureProgressOpt = courseProgress.getLectureProgress().stream()
+                .filter(lp -> lp.getLectureId().equals(lectureId))
+                .findFirst();
+        if (lectureProgressOpt.isEmpty()) {
+            throw new ResourceNotFoundException("Lecture not found in course progress");
         }
-        if (!alreadyExists) {
-            courseProgress.getLectureProgress().add(new LectureProgress(lectureId, true));
-        }
+        lectureProgressOpt.get().setViewed(true);
 
         // Check if course is completed
-        long viewedCount = courseProgress.getLectureProgress().stream().filter(LectureProgress::getViewed).count();
-        if (viewedCount == totalLectures) {
-            courseProgress.setCompleted(true);
-        }
+        boolean allViewed = courseProgress.getLectureProgress().stream()
+                .allMatch(lp -> Boolean.TRUE.equals(lp.getViewed()));
+        courseProgress.setCompleted(allViewed);
+
         courseProgressRepository.save(courseProgress);
     }
 
     @Override
     public CourseProgressResponse getCourseProgress(UUID userId, UUID courseId) {
-        return courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
-                .map(progress -> new CourseProgressResponse(progress.getLectureProgress(), progress.isCompleted()))
-                .orElseGet(() -> new CourseProgressResponse(Collections.emptyList(), false));
+        // Check if course is purchased by current user
+        if (hasUserPurchasedCourse(userId, courseId)) {
+            throw new ForbiddenException("Course not purchased by user");
+        }
+
+        CourseProgress progress = courseProgressRepository.findByUserIdAndCourseId(userId, courseId)
+                .orElseThrow(() -> new ResourceNotFoundException("Course progress not found"));
+        return new CourseProgressResponse(progress.getLectureProgress(), progress.isCompleted());
+    }
+
+    // Helper Methods
+
+    private boolean hasUserPurchasedCourse(UUID userId, UUID courseId) {
+        CheckUserCoursePurchaseResponse response = paymentStub.checkUserCoursePurchase(
+                CheckUserCoursePurchaseRequest.newBuilder()
+                        .setUserId(userId.toString())
+                        .setCourseId(courseId.toString())
+                        .build()
+        );
+        return !response.getHasPurchased();
     }
 }
