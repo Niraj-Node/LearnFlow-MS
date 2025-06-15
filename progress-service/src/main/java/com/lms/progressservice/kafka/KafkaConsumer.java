@@ -4,7 +4,9 @@ import com.lms.grpc.GetAllUserIdsRequest;
 import com.lms.grpc.GetAllUserIdsResponse;
 import com.lms.grpc.UserServiceGrpc;
 import com.lms.progressservice.model.CourseProgress;
+import com.lms.progressservice.model.LectureProgress;
 import com.lms.progressservice.repository.CourseProgressRepository;
+import course.events.LectureEvent;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -54,6 +56,30 @@ public class KafkaConsumer {
             log.info("Initialized CourseProgress for {} users for courseId={}", progressList.size(), courseId);
         } catch (Exception e) {
             log.error("Failed to handle CourseCreated event: {}", e.getMessage(), e);
+        }
+    }
+
+    @KafkaListener(topics = "lecture-created-topic", groupId = "progress-service-group")
+    @Transactional
+    public void handleLectureCreatedEvent(ConsumerRecord<String, byte[]> record) {
+        try {
+            LectureEvent.LectureCreated event = LectureEvent.LectureCreated.parseFrom(record.value());
+            UUID courseId = UUID.fromString(event.getCourseId());
+            UUID lectureId = UUID.fromString(event.getLectureId());
+
+            List<CourseProgress> progresses = courseProgressRepository.findAllByCourseId(courseId);
+
+            for (CourseProgress progress : progresses) {
+                    progress.getLectureProgress().add(new LectureProgress(lectureId, false));
+                    progress.setCompleted(false); // new lecture means not completed
+            }
+
+            courseProgressRepository.saveAll(progresses);
+            log.info("Appended new lectureId={} to {} CourseProgress records for courseId={}",
+                    lectureId, progresses.size(), courseId);
+
+        } catch (Exception e) {
+            log.error("Failed to handle LectureCreated event: {}", e.getMessage(), e);
         }
     }
 }
